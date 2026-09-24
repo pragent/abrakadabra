@@ -71,13 +71,13 @@ def filter_monobank_rates(all_rates, currency_codes):
 
 def filter_privatbank_rates(all_rates, currency_codes):
     result = {}
-    currency_names_lower = {k.lower(): k for k in CURRENCY_NAMES.values()}
+    valid_ccys = set(CURRENCY_NAMES.values())
 
     for rate in all_rates:
         ccy = rate.get("ccy", "").upper()
         base_ccy = rate.get("base_ccy", "").upper()
 
-        if base_ccy == "UAH" and ccy in currency_names_lower:
+        if base_ccy == "UAH" and ccy in valid_ccys:
             code = CURRENCY_CODES_TO_CCY.get(ccy)
             if code and code in currency_codes:
                 try:
