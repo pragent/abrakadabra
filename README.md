@@ -21,8 +21,12 @@ Corezoid Process
 |------|----------|
 | Language | Python |
 | Repo URL | `https://github.com/YOUR_USERNAME/corezoid-monobank-rates` |
-| Tag / Branch | `main` |
+| Tag / Branch | `main` або `master` — **перевір яка гілка є в репо** |
+| Project path | *(порожньо — usercode.py в корені)* |
 | Build command | *(порожньо — залежностей немає)* |
+
+> ⚠️ **Важливо:** помилка `Git reference is invalid or does not exist` означає що гілка не знайдена.
+> Перевір назву гілки в GitHub (може бути `main` або `master`) і вкажи точно її.
 
 ### 2. Вхідні параметри task
 
@@ -34,7 +38,7 @@ Corezoid Process
 
 **Популярні коди валют:**
 - `840` — USD
-- `978` — EUR
+- `978` — EUR  
 - `826` — GBP
 - `756` — CHF
 - `985` — PLN
@@ -67,12 +71,24 @@ Corezoid Process
 }
 ```
 
+## Структура репозиторію
+
+```
+corezoid-monobank-rates/
+├── usercode.py       # Основний файл (назва обов'язкова для Corezoid Git Call)
+├── requirements.txt  # Залежності (stdlib only)
+├── Dockerfile        # Для локального тестування
+└── README.md
+```
+
+> **Чому `usercode.py`?** Corezoid Git Call для Python очікує файл з назвою `usercode.py` в корені проєкту (або в папці вказаній в Project path).
+
 ## Локальне тестування
 
 ### Запуск сервера
 
 ```bash
-GITCALL_PORT=8080 python main.py
+GITCALL_PORT=8080 python usercode.py
 ```
 
 ### Тестовий запит (curl)
@@ -91,40 +107,15 @@ curl http://127.0.0.1:8080 \
   }'
 ```
 
-### Очікувана відповідь
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "test-1",
-  "result": {
-    "greeting": "Привіт, Іванко! Ось курси валют від api.monobank.ua",
-    "rates": [...],
-    "source": "https://api.monobank.ua/bank/currency",
-    "fetched_at": "2026-09-24T10:01:23+00:00"
-  }
-}
-```
-
-### Docker (опціонально)
+### Docker
 
 ```bash
 docker build -t corezoid-monobank-rates .
-docker run --rm -p 8080:8080 -e GITCALL_PORT=8080 corezoid-monobank-rates
-```
-
-## Структура репозиторію
-
-```
-corezoid-monobank-rates/
-├── main.py           # Основний файл — JSON-RPC сервер + бізнес-логіка
-├── requirements.txt  # Залежності (stdlib only)
-├── Dockerfile        # Для локального тестування
-└── README.md
+docker run --rm -p 8080:8080 -e GITCALL_PORT=8080 --user 501:501 --read-only corezoid-monobank-rates
 ```
 
 ## Важливо
 
-- Модуль використовує **тільки стандартну бібліотеку Python 3.12** — не потребує `pip install`
-- Monobank API публічний і не потребує токена для базових запитів
-- Git Call викликає Corezoid з IP: `54.171.15.37`, `108.128.68.222`, `63.33.226.230`
+- Модуль використовує **тільки стандартну бібліотеку Python 3.12** — `pip install` не потрібен
+- Monobank API публічний, токен не обов'язковий для базових запитів
+- Corezoid викликає Git Call з IP: `54.171.15.37`, `108.128.68.222`, `63.33.226.230`

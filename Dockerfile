@@ -4,7 +4,7 @@
 FROM python:3.12-alpine
 
 WORKDIR /app
-COPY main.py .
+COPY usercode.py .
 COPY requirements.txt .
 
 # Обов'язкова вимога Corezoid — user/group 501:501, read-only container
@@ -13,4 +13,4 @@ RUN addgroup -g 501 usercode && \
 
 USER usercode
 
-CMD ["python", "main.py"]
+CMD ["python", "usercode.py"]
