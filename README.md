@@ -1,6 +1,6 @@
 # corezoid-monobank-rates
 
-Модуль для Corezoid **Git Call** — отримує актуальні курси валют від [api.monobank.ua](https://api.monobank.ua) і повертає результат у Corezoid task.
+Модуль для Corezoid **Git Call** — отримує актуальні курси валют від [Monobank](https://api.monobank.ua) та [PrivatBank](https://api.privatbank.ua), порівнює їх і рекомендує клієнту найвигідніший варіант.
 
 ## Як це працює
 
@@ -9,8 +9,12 @@ Corezoid Process
   └── Start  →  Git Call (цей репо)  →  End
                     │
                     ├── приймає: name, currencies, api_token
-                    ├── звертається до api.monobank.ua
-                    └── повертає: greeting, rates[], fetched_at
+                    ├── звертається до:
+                    │   ├── api.monobank.ua/bank/currency
+                    │   └── api.privatbank.ua/p24api/pubinfo
+                    ├── порівнює курси
+                    └── повертає: greeting, recommendation, monobank, 
+                                   privatbank, comparison, fetched_at
 ```
 
 ## Налаштування в Corezoid
@@ -47,26 +51,26 @@ Corezoid Process
 
 ```json
 {
-  "greeting": "Привіт, Іванко! Ось курси валют від api.monobank.ua",
-  "rates": [
-    {
-      "currency": "USD",
-      "code": 840,
-      "buy": 41.50,
-      "sell": 42.10,
-      "cross": null,
-      "updated_at": "2026-09-24T10:00:00+00:00"
-    },
-    {
-      "currency": "EUR",
-      "code": 978,
-      "buy": 45.20,
-      "sell": 46.00,
-      "cross": null,
-      "updated_at": "2026-09-24T10:00:00+00:00"
+  "greeting": "Привіт, Іванко! 👋 Ось порівняння курсів Monobank і PrivatBank",
+  "recommendation": "📊 **Аналіз курсів:**\n\nUSD:\n  💰 Купівля: Monobank краще (+0.15)\n  💵 Продаж: PrivatBank краще (-0.25)\n\n✅ **Рекомендація:**\n• Для **купівлі** валюти: скористайтесь **Monobank** 🟦",
+  "monobank": {
+    "USD": {"buy": 41.50, "sell": 42.10},
+    "EUR": {"buy": 45.20, "sell": 46.00}
+  },
+  "privatbank": {
+    "USD": {"buy": 41.35, "sell": 42.35},
+    "EUR": {"buy": 45.50, "sell": 45.90}
+  },
+  "comparison": {
+    "USD": {
+      "monobank": {"buy": 41.50, "sell": 42.10},
+      "privatbank": {"buy": 41.35, "sell": 42.35},
+      "better_buy": "PrivatBank",
+      "better_sell": "Monobank",
+      "buy_diff": 0.15,
+      "sell_diff": 0.25
     }
-  ],
-  "source": "https://api.monobank.ua/bank/currency",
+  },
   "fetched_at": "2026-09-24T10:01:23+00:00"
 }
 ```
@@ -102,7 +106,7 @@ curl http://127.0.0.1:8080 \
     "method": "Usercode.Run",
     "params": {
       "name": "Іванко",
-      "currencies": [840, 978]
+      "currencies": [840, 978, 826]
     }
   }'
 ```
@@ -114,8 +118,17 @@ docker build -t corezoid-monobank-rates .
 docker run --rm -p 8080:8080 -e GITCALL_PORT=8080 --user 501:501 --read-only corezoid-monobank-rates
 ```
 
+## Що програма робить
+
+1. **Отримує курси** від Monobank та PrivatBank
+2. **Порівнює** купівельні і продажні курси для кожної валюти
+3. **Аналізує** різницю в ціні (спред)
+4. **Рекомендує** найвигідніший банк для купівлі і продажу
+5. **Форматує** результат у вигляді зручної таблиці з емодзі
+
 ## Важливо
 
 - Модуль використовує **тільки стандартну бібліотеку Python 3.12** — `pip install` не потрібен
-- Monobank API публічний, токен не обов'язковий для базових запитів
+- Обидва API публічні, токен не обов'язковий
 - Corezoid викликає Git Call з IP: `54.171.15.37`, `108.128.68.222`, `63.33.226.230`
+- Якщо один з API недоступний, програма все одно працює з доступним
